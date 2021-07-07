@@ -7,38 +7,13 @@ import (
 	"net"
 	"os"
 	"sync"
+
+	"github.com/DrIhor/test_project/internal/model"
 )
-
-// message structure
-type message struct {
-	From string `json:"from"`
-	Msg  string `json:"msg"`
-}
-
-// enter user name for chat identify
-func (ms *message) getUserName() {
-	fmt.Println("Enter username:")
-	name, err := bufio.NewReader(os.Stdin).ReadString('\n')
-	if err != nil {
-		panic(err)
-	}
-
-	ms.From = name
-}
-
-// add new message from user to send
-func (ms *message) AddMessage(text string) {
-	ms.Msg = text
-}
-
-// output for user data
-func (ms *message) PrintMessage() {
-	fmt.Printf("User: %sMessage: %s\n", ms.From, ms.Msg)
-}
 
 // read information from server by other users
 func readServer(conn net.Conn, wg *sync.WaitGroup) {
-	var ms message
+	var ms model.Message
 
 	// message capability
 	recieveBuffer := make([]byte, 2048)
@@ -65,7 +40,7 @@ func readServer(conn net.Conn, wg *sync.WaitGroup) {
 }
 
 // send information to other users
-func writeServer(ms message, conn net.Conn, wg *sync.WaitGroup) {
+func writeServer(ms model.Message, conn net.Conn, wg *sync.WaitGroup) {
 	for {
 		// read text from terminal to send
 		text, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -92,13 +67,13 @@ func writeServer(ms message, conn net.Conn, wg *sync.WaitGroup) {
 // main logic of client
 func StartWork() {
 	// connect to server
-	conn, err := net.Dial("tcp", "127.0.0.1:8081")
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", os.Getenv("SERVER_HOST"), os.Getenv("SERVER_PORT")))
 	if err != nil {
 		panic(err)
 	}
 
-	var ms message
-	ms.getUserName() // enter personal indentify name
+	var ms model.Message
+	ms.GetUserName() // enter personal indentify name
 
 	// sync gorutines to don`t close main
 	// if wg is done - client work is end

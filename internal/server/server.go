@@ -4,13 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-)
+	"os"
 
-// msg data struct
-type message struct {
-	From string `json:"from"`
-	Msg  string `json:"msg"`
-}
+	"github.com/DrIhor/test_project/internal/model"
+)
 
 // work witl all connections
 func handleConnection(conn net.Conn, usersConnections map[string]net.Conn) {
@@ -28,7 +25,7 @@ func handleConnection(conn net.Conn, usersConnections map[string]net.Conn) {
 
 		request_right := receiveBuffer[:read_len]
 
-		var obj message
+		var obj model.Message
 		if err := json.Unmarshal(request_right, &obj); err != nil {
 			fmt.Println(err)
 			conn.Close()
@@ -53,9 +50,8 @@ func handleConnection(conn net.Conn, usersConnections map[string]net.Conn) {
 
 // start server work
 func StartServer() {
-
 	// init listen
-	ln, err := net.Listen("tcp", ":8081")
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")))
 	if err != nil {
 		panic(err)
 	}
