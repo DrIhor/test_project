@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	cl "github.com/DrIhor/test_project/internal/client"
@@ -13,5 +14,6 @@ func main() {
 		log.Fatalf("Error loading .env file")
 	}
 
+	fmt.Println("Start client work")
 	cl.StartWork()
 }

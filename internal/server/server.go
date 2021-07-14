@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"os"
 
-	"github.com/DrIhor/test_project/internal/model"
+	conf "github.com/DrIhor/test_project/pkg/config"
+	msg "github.com/DrIhor/test_project/pkg/message"
 )
 
 // work witl all connections
@@ -25,7 +25,7 @@ func handleConnection(conn net.Conn, usersConnections map[string]net.Conn) {
 
 		request_right := receiveBuffer[:read_len]
 
-		var obj model.Message
+		var obj msg.Message
 		if err := json.Unmarshal(request_right, &obj); err != nil {
 			fmt.Println(err)
 			conn.Close()
@@ -45,13 +45,15 @@ func handleConnection(conn net.Conn, usersConnections map[string]net.Conn) {
 			cn.Write(req)
 		}
 	}
-
 }
 
 // start server work
 func StartServer() {
+
+	serverConf := conf.InitConfig()
+
 	// init listen
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")))
+	ln, err := net.Listen("tcp", serverConf.GetAggress())
 	if err != nil {
 		panic(err)
 	}

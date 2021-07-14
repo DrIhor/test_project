@@ -8,12 +8,13 @@ import (
 	"os"
 	"sync"
 
-	"github.com/DrIhor/test_project/internal/model"
+	conf "github.com/DrIhor/test_project/pkg/config"
+	msg "github.com/DrIhor/test_project/pkg/message"
 )
 
 // read information from server by other users
 func readServer(conn net.Conn, wg *sync.WaitGroup) {
-	var ms model.Message
+	var ms msg.Message
 
 	// message capability
 	recieveBuffer := make([]byte, 2048)
@@ -40,7 +41,7 @@ func readServer(conn net.Conn, wg *sync.WaitGroup) {
 }
 
 // send information to other users
-func writeServer(ms model.Message, conn net.Conn, wg *sync.WaitGroup) {
+func writeServer(ms msg.Message, conn net.Conn, wg *sync.WaitGroup) {
 	for {
 		// read text from terminal to send
 		text, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -66,13 +67,15 @@ func writeServer(ms model.Message, conn net.Conn, wg *sync.WaitGroup) {
 
 // main logic of client
 func StartWork() {
+
+	serverInfo := conf.InitConfig()
 	// connect to server
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", os.Getenv("SERVER_HOST"), os.Getenv("SERVER_PORT")))
+	conn, err := net.Dial("tcp", serverInfo.GetAggress())
 	if err != nil {
 		panic(err)
 	}
 
-	var ms model.Message
+	var ms msg.Message
 	ms.GetUserName() // enter personal indentify name
 
 	// sync gorutines to don`t close main
