@@ -25,17 +25,22 @@ func (ms *Message) GetUserName() {
 	ms.From = name
 }
 
-// add new message from user to send
+// add new message from user to send and add other default values
 func (ms *Message) AddMessage(text string) {
-	ms.Msg = text
+	ms.Msg = text // message text
+
+	// other values to defaults
+	ms.UpdateName = false
+	ms.FirstConnection = false
 }
 
 func (ms *Message) UpdateUserName(name string) {
 	fmt.Printf("\n Update user name to %s \n", name)
+	ms.UpdateName = true
 	ms.From = name
 }
 
 // output for user data
 func (ms *Message) PrintMessage() {
-	fmt.Printf("User: %sMessage: %s\n", ms.From, ms.Msg)
+	fmt.Printf("User: %s\nMessage: %s\n", ms.From, ms.Msg)
 }

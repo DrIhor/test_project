@@ -9,6 +9,7 @@ import (
 	msg "github.com/DrIhor/test_project/pkg/message"
 )
 
+// send message to each user
 func sendAllData(obj msg.Message, usersConnections map[string]*userInfo) {
 	// encode user data
 	req, err := json.Marshal(obj)
@@ -24,15 +25,17 @@ func sendAllData(obj msg.Message, usersConnections map[string]*userInfo) {
 
 // work witl all connections
 func handleConnection(conn net.Conn, usersConnections map[string]*userInfo) {
-	var obj msg.Message
 	receiveBuffer := make([]byte, 2048)
 
 	for {
+		var obj msg.Message
+
 		read_len, err := conn.Read(receiveBuffer)
 		if err != nil {
 			fmt.Println(err)
 			conn.Close()
 
+			// remove user and send alert
 			user := usersConnections[conn.RemoteAddr().String()]
 			delete(usersConnections, conn.RemoteAddr().String())
 			disconnectionMessage(&obj, user.userName, len(usersConnections))
@@ -46,6 +49,7 @@ func handleConnection(conn net.Conn, usersConnections map[string]*userInfo) {
 			fmt.Println(err)
 			conn.Close()
 
+			// remove user and send alert
 			user := usersConnections[conn.RemoteAddr().String()]
 			delete(usersConnections, conn.RemoteAddr().String())
 			disconnectionMessage(&obj, user.userName, len(usersConnections))
@@ -56,12 +60,10 @@ func handleConnection(conn net.Conn, usersConnections map[string]*userInfo) {
 
 		if obj.UpdateName {
 			us := usersConnections[conn.RemoteAddr().String()]
-
 			updateNameMessage(&obj, us.userName, obj.From, len(usersConnections))
 			us.updateName(obj.From)
 		} else if obj.FirstConnection {
 			us := usersConnections[conn.RemoteAddr().String()]
-
 			connectionMessage(&obj, obj.From, len(usersConnections))
 			us.updateName(obj.From)
 		}

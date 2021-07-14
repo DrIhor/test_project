@@ -14,11 +14,12 @@ import (
 
 // read information from server by other users
 func readServer(conn net.Conn, wg *sync.WaitGroup) {
-	var ms msg.Message
 
 	// message capability
 	recieveBuffer := make([]byte, 2048)
 	for {
+		var ms msg.Message
+
 		// read info from connection
 		read_len, err := conn.Read(recieveBuffer)
 		if err != nil {
@@ -51,8 +52,11 @@ func writeServer(ms msg.Message, conn net.Conn, wg *sync.WaitGroup) {
 			break
 		}
 
-		// add new msg
-		ms.AddMessage(text)
+		emptyRow := userEvents(&ms, text) // create some eavent with data
+		if emptyRow {
+			continue
+		}
+
 		req, err := json.Marshal(ms)
 		if err != nil {
 			fmt.Println(err)
