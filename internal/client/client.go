@@ -65,6 +65,20 @@ func writeServer(ms msg.Message, conn net.Conn, wg *sync.WaitGroup) {
 	}
 }
 
+func FirstConnectionUpdate(ms *msg.Message, conn net.Conn) {
+	ms.FirstConnection = true // set updating of data
+
+	req, err := json.Marshal(ms)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// send to other users
+	conn.Write(req)
+
+	ms.FirstConnection = false // after end of update return to default value
+}
+
 // main logic of client
 func StartWork() {
 
@@ -77,6 +91,9 @@ func StartWork() {
 
 	var ms msg.Message
 	ms.GetUserName() // enter personal indentify name
+
+	// send user name to save at serever
+	FirstConnectionUpdate(&ms, conn)
 
 	// sync gorutines to don`t close main
 	// if wg is done - client work is end

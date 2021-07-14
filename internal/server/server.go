@@ -9,41 +9,64 @@ import (
 	msg "github.com/DrIhor/test_project/pkg/message"
 )
 
-// work witl all connections
-func handleConnection(conn net.Conn, usersConnections map[string]net.Conn) {
+func sendAllData(obj msg.Message, usersConnections map[string]*userInfo) {
+	// encode user data
+	req, err := json.Marshal(obj)
+	if err != nil {
+		fmt.Println(err)
+	}
 
+	// send information for all users
+	for _, user := range usersConnections {
+		user.conn.Write(req)
+	}
+}
+
+// work witl all connections
+func handleConnection(conn net.Conn, usersConnections map[string]*userInfo) {
+	var obj msg.Message
 	receiveBuffer := make([]byte, 2048)
+
 	for {
 		read_len, err := conn.Read(receiveBuffer)
 		if err != nil {
 			fmt.Println(err)
 			conn.Close()
+
+			user := usersConnections[conn.RemoteAddr().String()]
 			delete(usersConnections, conn.RemoteAddr().String())
-			fmt.Println(usersConnections)
+			disconnectionMessage(&obj, user.userName, len(usersConnections))
+			sendAllData(obj, usersConnections)
+
 			break
 		}
 
 		request_right := receiveBuffer[:read_len]
-
-		var obj msg.Message
 		if err := json.Unmarshal(request_right, &obj); err != nil {
 			fmt.Println(err)
 			conn.Close()
+
+			user := usersConnections[conn.RemoteAddr().String()]
 			delete(usersConnections, conn.RemoteAddr().String())
-			fmt.Println(usersConnections)
+			disconnectionMessage(&obj, user.userName, len(usersConnections))
+			sendAllData(obj, usersConnections)
+
 			break
 		}
 
-		// encode user data
-		req, err := json.Marshal(obj)
-		if err != nil {
-			fmt.Println(err)
+		if obj.UpdateName {
+			us := usersConnections[conn.RemoteAddr().String()]
+
+			updateNameMessage(&obj, us.userName, obj.From, len(usersConnections))
+			us.updateName(obj.From)
+		} else if obj.FirstConnection {
+			us := usersConnections[conn.RemoteAddr().String()]
+
+			connectionMessage(&obj, obj.From, len(usersConnections))
+			us.updateName(obj.From)
 		}
 
-		// send information for all users
-		for _, cn := range usersConnections {
-			cn.Write(req)
-		}
+		sendAllData(obj, usersConnections)
 	}
 }
 
@@ -58,14 +81,14 @@ func StartServer() {
 		panic(err)
 	}
 
-	usersConnections := make(map[string]net.Conn) // all users
+	usersConnections := make(map[string]*userInfo) // all users
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			fmt.Println(err)
 			break
 		}
-		usersConnections[conn.RemoteAddr().String()] = conn // save new user
+		usersConnections[conn.RemoteAddr().String()] = addNewUser(conn) // save new user
 
 		go handleConnection(conn, usersConnections) // handle all work with connection
 	}
