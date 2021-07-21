@@ -3,10 +3,10 @@ package client
 import (
 	"strings"
 
-	msg "github.com/DrIhor/test_project/pkg/message"
+	msg "github.com/DrIhor/test_project/internal/service/messages"
 )
 
-func userEvents(data *msg.Message, msg string) bool {
+func userEvents(data *msg.MsgService, msg string) bool {
 	wordsInRow := strings.Fields(msg)
 
 	// if empty string we skip send data

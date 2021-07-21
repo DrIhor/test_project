@@ -8,8 +8,8 @@ import (
 	"os"
 	"sync"
 
-	conf "github.com/DrIhor/test_project/pkg/config"
-	msg "github.com/DrIhor/test_project/pkg/message"
+	msg "github.com/DrIhor/test_project/internal/service/messages"
+	"github.com/DrIhor/test_project/internal/service/server/config"
 )
 
 // read information from server by other users
@@ -18,7 +18,7 @@ func readServer(conn net.Conn, wg *sync.WaitGroup) {
 	// message capability
 	recieveBuffer := make([]byte, 2048)
 	for {
-		var ms msg.Message
+		var ms msg.MsgService
 
 		// read info from connection
 		read_len, err := conn.Read(recieveBuffer)
@@ -30,7 +30,7 @@ func readServer(conn net.Conn, wg *sync.WaitGroup) {
 
 		// read struct
 		request_right := recieveBuffer[:read_len]
-		if err := json.Unmarshal(request_right, &ms); err != nil {
+		if err := json.Unmarshal(request_right, &ms.Data); err != nil {
 			fmt.Println(err)
 			wg.Done()
 			break
@@ -42,7 +42,7 @@ func readServer(conn net.Conn, wg *sync.WaitGroup) {
 }
 
 // send information to other users
-func writeServer(ms msg.Message, conn net.Conn, wg *sync.WaitGroup) {
+func writeServer(ms msg.MsgService, conn net.Conn, wg *sync.WaitGroup) {
 	for {
 		// read text from terminal to send
 		text, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -52,12 +52,12 @@ func writeServer(ms msg.Message, conn net.Conn, wg *sync.WaitGroup) {
 			break
 		}
 
-		emptyRow := userEvents(&ms, text) // create some eavent with data
+		emptyRow := userEvents(&ms, text) // create some event with data
 		if emptyRow {
 			continue
 		}
 
-		req, err := json.Marshal(ms)
+		req, err := json.Marshal(ms.Data)
 		if err != nil {
 			fmt.Println(err)
 			wg.Done()
@@ -69,10 +69,10 @@ func writeServer(ms msg.Message, conn net.Conn, wg *sync.WaitGroup) {
 	}
 }
 
-func FirstConnectionUpdate(ms *msg.Message, conn net.Conn) {
-	ms.FirstConnection = true // set updating of data
+func FirstConnectionUpdate(ms *msg.MsgService, conn net.Conn) {
+	ms.Data.FirstConnection = true // set updating of data
 
-	req, err := json.Marshal(ms)
+	req, err := json.Marshal(ms.Data)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -80,20 +80,20 @@ func FirstConnectionUpdate(ms *msg.Message, conn net.Conn) {
 	// send to other users
 	conn.Write(req)
 
-	ms.FirstConnection = false // after end of update return to default value
+	ms.Data.FirstConnection = false // after end of update return to default value
 }
 
 // main logic of client
 func StartWork() {
 
-	serverInfo := conf.InitConfig()
+	server := config.InitServer()
 	// connect to server
-	conn, err := net.Dial("tcp", serverInfo.GetAggress())
+	conn, err := net.Dial("tcp", config.GetAggress(*server))
 	if err != nil {
 		panic(err)
 	}
 
-	var ms msg.Message
+	var ms msg.MsgService
 	ms.GetUserName() // enter personal indentify name
 
 	// send user name to save at serever
