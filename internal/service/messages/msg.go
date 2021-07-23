@@ -15,6 +15,15 @@ type MsgService struct {
 	Data msg.Message
 }
 
+// init new empty message service
+func NewMsgService() *MsgService {
+	return &MsgService{}
+}
+
+func (ms *MsgService) GetMsgService() *MsgService {
+	return ms
+}
+
 func (ms MsgService) DataEncode() ([]byte, error) {
 	res, err := json.Marshal(ms.Data)
 	if err != nil {

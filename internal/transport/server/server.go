@@ -26,7 +26,7 @@ func handleConnection(conn net.Conn, usServ *users.UserService) {
 	receiveBuffer := make([]byte, 2048)
 
 	for {
-		var message msg.MsgService
+		message := msg.NewMsgService()
 
 		read_len, err := conn.Read(receiveBuffer)
 		if err != nil {
@@ -87,7 +87,6 @@ func StartServer() {
 		}
 
 		userServices.Add(conn.RemoteAddr().String(), "", conn)
-		// usersConnections[conn.RemoteAddr().String()] = addNewUser(conn) // save new user
 
 		go handleConnection(conn, userServices) // handle all work with connection
 	}

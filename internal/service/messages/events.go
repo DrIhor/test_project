@@ -1,12 +1,8 @@
-package client
+package messages
 
-import (
-	"strings"
+import "strings"
 
-	msg "github.com/DrIhor/test_project/internal/service/messages"
-)
-
-func userEvents(data *msg.MsgService, msg string) bool {
+func (sr *MsgService) CheckEvent(msg string) bool {
 	wordsInRow := strings.Fields(msg)
 
 	// if empty string we skip send data
@@ -17,10 +13,10 @@ func userEvents(data *msg.MsgService, msg string) bool {
 	switch wordsInRow[0] {
 	case "@changeName":
 		if len(wordsInRow) >= 2 {
-			data.UpdateUserName(wordsInRow[1])
+			sr.UpdateUserName(wordsInRow[1])
 		}
 	default:
-		data.AddMessage(msg)
+		sr.AddMessage(msg)
 	}
 
 	return false

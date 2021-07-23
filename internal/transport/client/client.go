@@ -13,15 +13,14 @@ import (
 )
 
 // read information from server by other users
-func readServer(conn net.Conn, wg *sync.WaitGroup) {
+func readServer(us *user, wg *sync.WaitGroup) {
 
 	// message capability
 	recieveBuffer := make([]byte, 2048)
 	for {
-		var ms msg.MsgService
 
 		// read info from connection
-		read_len, err := conn.Read(recieveBuffer)
+		read_len, err := us.conn.Read(recieveBuffer)
 		if err != nil {
 			fmt.Println(err)
 			wg.Done()
@@ -30,19 +29,19 @@ func readServer(conn net.Conn, wg *sync.WaitGroup) {
 
 		// read struct
 		request_right := recieveBuffer[:read_len]
-		if err := json.Unmarshal(request_right, &ms.Data); err != nil {
+		if err := json.Unmarshal(request_right, &us.serv.GetMsgService().Data); err != nil {
 			fmt.Println(err)
 			wg.Done()
 			break
 		}
 
 		// print user data
-		ms.PrintMessage()
+		us.serv.GetMsgService().PrintMessage()
 	}
 }
 
 // send information to other users
-func writeServer(ms msg.MsgService, conn net.Conn, wg *sync.WaitGroup) {
+func writeServer(us *user, wg *sync.WaitGroup) {
 	for {
 		// read text from terminal to send
 		text, err := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -52,12 +51,12 @@ func writeServer(ms msg.MsgService, conn net.Conn, wg *sync.WaitGroup) {
 			break
 		}
 
-		emptyRow := userEvents(&ms, text) // create some event with data
+		emptyRow := us.serv.CheckEvent(text) // create some event with data
 		if emptyRow {
 			continue
 		}
 
-		req, err := json.Marshal(ms.Data)
+		req, err := json.Marshal(us.serv.GetMsgService().Data)
 		if err != nil {
 			fmt.Println(err)
 			wg.Done()
@@ -65,7 +64,7 @@ func writeServer(ms msg.MsgService, conn net.Conn, wg *sync.WaitGroup) {
 		}
 
 		// send to other users
-		conn.Write(req)
+		us.conn.Write(req)
 	}
 }
 
@@ -93,11 +92,11 @@ func StartWork() {
 		panic(err)
 	}
 
-	var ms msg.MsgService
-	ms.GetUserName() // enter personal indentify name
+	user := NewUser(conn, msg.NewMsgService())
+	user.serv.GetUserName() // enter personal indentify name
 
 	// send user name to save at serever
-	FirstConnectionUpdate(&ms, conn)
+	FirstConnectionUpdate(user.serv.GetMsgService(), conn)
 
 	// sync gorutines to don`t close main
 	// if wg is done - client work is end
@@ -105,8 +104,8 @@ func StartWork() {
 	wg.Add(1)
 
 	// read info from server and send data at same time
-	go readServer(conn, &wg)
-	go writeServer(ms, conn, &wg)
+	go readServer(user, &wg)
+	go writeServer(user, &wg)
 
 	wg.Wait()
 	fmt.Println("End of work)))")

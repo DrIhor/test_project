@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	sr "github.com/DrIhor/test_project/internal/service/server"
+	sr "github.com/DrIhor/test_project/internal/transport/server"
 	"github.com/joho/godotenv"
 )
 
