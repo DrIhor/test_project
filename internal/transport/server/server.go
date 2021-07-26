@@ -35,10 +35,18 @@ func handleConnection(conn net.Conn, usServ *users.UserService) {
 
 			// remove user and send alert
 			user := usServ.GetUser(conn.RemoteAddr().String())
-			usersLeft, _ := usServ.Delete(conn.RemoteAddr().String())
+			usersLeft, err := usServ.Delete(conn.RemoteAddr().String())
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 			message.DisconnectionMessage(user.UserName, usersLeft)
 
-			resp, _ := message.DataEncode()
+			resp, err := message.DataEncode()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 			sendAllData(resp, usServ.GetAllUsers())
 
 			break
@@ -52,10 +60,19 @@ func handleConnection(conn net.Conn, usServ *users.UserService) {
 
 			// remove user and send alert
 			user := usServ.GetUser(conn.RemoteAddr().String())
-			usersLeft, _ := usServ.Delete(conn.RemoteAddr().String())
-			message.DisconnectionMessage(user.UserName, usersLeft)
+			usersLeft, err := usServ.Delete(conn.RemoteAddr().String())
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 
-			resp, _ := message.DataEncode()
+			message.DisconnectionMessage(user.UserName, usersLeft)
+			resp, err := message.DataEncode()
+			if err != nil {
+				fmt.Println("Resp encode error ", err)
+				return
+			}
+
 			sendAllData(resp, usServ.GetAllUsers())
 
 			break
@@ -63,7 +80,11 @@ func handleConnection(conn net.Conn, usServ *users.UserService) {
 
 		message.CheckUserUpdates(conn, usServ)
 
-		dataResponse, _ := message.DataEncode()
+		dataResponse, err := message.DataEncode()
+		if err != nil {
+			fmt.Println("Resp encode error", err)
+			return
+		}
 		sendAllData(dataResponse, usServ.GetAllUsers())
 	}
 }

@@ -29,14 +29,15 @@ func readServer(us *user, wg *sync.WaitGroup) {
 
 		// read struct
 		request_right := recieveBuffer[:read_len]
-		if err := json.Unmarshal(request_right, &us.serv.GetMsgService().Data); err != nil {
+		msg := us.serv.GetMsgService()
+		if err := json.Unmarshal(request_right, &msg.Data); err != nil {
 			fmt.Println(err)
 			wg.Done()
 			break
 		}
 
 		// print user data
-		us.serv.GetMsgService().PrintMessage()
+		msg.PrintMessage()
 	}
 }
 
@@ -56,7 +57,8 @@ func writeServer(us *user, wg *sync.WaitGroup) {
 			continue
 		}
 
-		req, err := json.Marshal(us.serv.GetMsgService().Data)
+		msg := us.serv.GetMsgService()
+		req, err := json.Marshal(msg.Data)
 		if err != nil {
 			fmt.Println(err)
 			wg.Done()
@@ -96,7 +98,8 @@ func StartWork() {
 	user.serv.GetUserName() // enter personal indentify name
 
 	// send user name to save at serever
-	FirstConnectionUpdate(user.serv.GetMsgService(), conn)
+	msg := user.serv.GetMsgService()
+	FirstConnectionUpdate(msg, conn)
 
 	// sync gorutines to don`t close main
 	// if wg is done - client work is end
